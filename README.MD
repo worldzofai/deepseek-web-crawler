@@ -1,6 +1,8 @@
 # DeepSeek Web Crawler 🤖
 
-A powerful and flexible web crawler that uses Groq's LLM API to intelligently extract structured data from any website. Perfect for data scientists, researchers, and developers who need to gather and analyze web data.
+A powerful and flexible web crawler that uses Groq's LLM API to intelligently extract structured data from any website. Perfect for data scientists, researchers, and developers who need to gather and analyze web data efficiently.
+
+> 🚀 **Quick Start**: Run `python main.py --config test` to try the crawler with local test data!
 
 ## ✨ Features
 
