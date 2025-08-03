@@ -29,7 +29,12 @@ load_dotenv()
 
 
 def parse_args() -> str:
-    """Parse command line arguments."""
+    """
+    Parse command line arguments for the web crawler.
+    
+    Returns:
+        str: The selected configuration name to use for crawling.
+    """
     # Get available configurations
     default_configs = ["dental", "minimal", "detailed"]
     custom_configs = [k for k in CONFIGS.keys() if k not in default_configs]
