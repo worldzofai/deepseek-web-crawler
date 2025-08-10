@@ -30,21 +30,27 @@ load_dotenv()
 
 def parse_args() -> str:
     """Parse command line arguments."""
-    # Get available configurations
-    default_configs = ["dental", "minimal", "detailed"]
-    custom_configs = [k for k in CONFIGS.keys() if k not in default_configs]
-    
+    # Define standard configurations
+    standard_configs = ["test", "dental", "minimal", "detailed"]
+
+    # Categorize all available configurations
+    user_defined_configs = [k for k in CONFIGS.keys() if k not in standard_configs]
+
     # Create help text
     help_text = "Configuration to use. Available options:\n"
-    help_text += "\nDefault templates:\n"
-    for config in default_configs:
-        if config in CONFIGS:
-            help_text += f"  {config}: For {config} scraping\n"
-    
-    if custom_configs:
-        help_text += "\nCustom configurations:\n"
-        for config in custom_configs:
-            help_text += f"  {config}: Custom configuration\n"
+
+    help_text += "\nStandard Configurations:\n"
+    for config_name in standard_configs:
+        if config_name in CONFIGS:
+            if config_name == "test":
+                help_text += f"  {config_name}: Local testing configuration\n"
+            else:
+                help_text += f"  {config_name}: For {config_name} scraping\n"
+
+    if user_defined_configs:
+        help_text += "\nUser-defined Configurations:\n"
+        for config_name in user_defined_configs:
+            help_text += f"  {config_name}: User-defined configuration\n"
 
     parser = argparse.ArgumentParser(
         description="Deep Seek Web Crawler",
@@ -62,21 +68,48 @@ def parse_args() -> str:
         action="store_true",
         help="List available configurations and exit"
     )
-    
-    args = parser.parse_args()
-    
-    if args.list:
+    # Check for --list argument before full parsing to bypass config requirement
+    if "--list" in sys.argv:
         print("\nAvailable configurations:")
-        print("\nDefault templates:")
-        for config in default_configs:
-            if config in CONFIGS:
-                print(f"  {config}: For {config} scraping")
-        if custom_configs:
-            print("\nCustom configurations:")
-            for config in custom_configs:
-                print(f"  {config}: Custom configuration")
+
+        print("\nStandard Configurations:")
+        for config_name in standard_configs:
+            if config_name in CONFIGS:
+                if config_name == "test":
+                    print(f"  {config_name}: Local testing configuration")
+                else:
+                    print(f"  {config_name}: For {config_name} scraping")
+
+        if user_defined_configs:
+            print("\nUser-defined Configurations:")
+            for config_name in user_defined_configs:
+                print(f"  {config_name}: User-defined configuration")
         sys.exit(0)
-    
+
+    args = parser.parse_args()
+
+    # The original args.list check is now redundant due to the pre-check,
+    # but kept here to minimize changes to the existing structure if needed for other logic.
+    # However, for this specific scenario, it will not be reached if --list is used.
+    if args.list:
+        # This block will effectively not be called if --list is passed,
+        # as sys.exit(0) would have already occurred.
+        print("\nAvailable configurations:")
+
+        print("\nStandard Configurations:")
+        for config_name in standard_configs:
+            if config_name in CONFIGS:
+                if config_name == "test":
+                    print(f"  {config_name}: Local testing configuration")
+                else:
+                    print(f"  {config_name}: For {config_name} scraping")
+
+        if user_defined_configs:
+            print("\nUser-defined Configurations:")
+            for config_name in user_defined_configs:
+                print(f"  {config_name}: User-defined configuration")
+        sys.exit(0)
+
     return args.config
 
 
@@ -93,7 +126,7 @@ def get_config(template: str) -> Dict[str, Any]:
 async def crawl_items(config: Dict[str, Any]):
     """
     Main function to crawl and extract data from websites.
-    
+
     Args:
         config: Dictionary containing crawler configuration
     """
@@ -106,7 +139,7 @@ async def crawl_items(config: Dict[str, Any]):
     page_number = 1
     all_items = []
     seen_titles = set()
-    
+
     required_keys = config["REQUIRED_KEYS"]
     multi_page = config["CRAWLER_CONFIG"]["MULTI_PAGE"]
     max_pages = config["CRAWLER_CONFIG"].get("MAX_PAGES", 1)
@@ -145,12 +178,12 @@ async def crawl_items(config: Dict[str, Any]):
 
             # Add the items from this page to the total list
             all_items.extend(items)
-            
+
             # Check if we should continue to next page
             if not multi_page or page_number >= max_pages:
                 print(f"\nReached {'page limit' if multi_page else 'single page mode'}. Ending crawl.")
                 break
-                
+
             page_number += 1
             print(f"\nMoving to page {page_number}...")
             await asyncio.sleep(delay)
@@ -160,10 +193,10 @@ async def crawl_items(config: Dict[str, Any]):
         # Save all items
         save_items_to_csv(all_items, "items.csv")
         print(f"\nSaved {len(all_items)} items to 'items.csv'")
-        
+
         # Save complete items (those with all required fields)
         complete_items = [
-            item for item in all_items 
+            item for item in all_items
             if all(key in item and item[key] for key in required_keys)
         ]
         save_items_to_csv(complete_items, "complete_items.csv")
@@ -181,7 +214,7 @@ async def main():
     # Get configuration template from command line
     template = parse_args()
     config = get_config(template)
-    
+
     try:
         await crawl_items(config)
     except KeyboardInterrupt:
