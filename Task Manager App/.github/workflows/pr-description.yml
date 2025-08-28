@@ -1,0 +1,42 @@
+name: PR Description with Auggie
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  pr-description:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Auggie CLI
+        run: |
+          npm install -g @augmentcode/cli
+      
+      - name: Generate PR Description
+        env:
+          AUGMENT_SESSION_AUTH: ${{ secrets.AUGMENT_SESSION_AUTH }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the diff for this PR
+          git diff origin/${{ github.base_ref }}...HEAD > pr_changes.diff
+          
+          # Generate description using Auggie
+          auggie --print "Analyze these code changes and generate a comprehensive PR description with: 1) Summary of changes, 2) Key features/fixes, 3) Testing considerations, 4) Breaking changes (if any). Format as markdown." < pr_changes.diff > pr_description.md
+          
+          # Update PR description
+          gh pr edit ${{ github.event.pull_request.number }} --body-file pr_description.md
+        shell: bash

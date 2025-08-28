@@ -1,0 +1,42 @@
+name: PR Review with Auggie
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  pr-review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      
+      - name: Install Auggie CLI
+        run: |
+          npm install -g @augmentcode/cli
+      
+      - name: Generate PR Review
+        env:
+          AUGMENT_SESSION_AUTH: ${{ secrets.AUGMENT_SESSION_AUTH }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get the diff for this PR
+          git diff origin/${{ github.base_ref }}...HEAD > pr_changes.diff
+          
+          # Generate review using Auggie
+          auggie --print "Review these code changes and provide: 1) Code quality assessment, 2) Potential issues or bugs, 3) Security considerations, 4) Performance implications, 5) Suggestions for improvement. Be constructive and specific." < pr_changes.diff > review_comments.md
+          
+          # Post review as a comment
+          gh pr comment ${{ github.event.pull_request.number }} --body-file review_comments.md
+        shell: bash
