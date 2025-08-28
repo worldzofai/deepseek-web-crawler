@@ -1,0 +1,285 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  username  String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tasks         Task[]
+  assignedTasks Task[]         @relation("AssignedTasks")
+  categories    Category[]
+  comments      Comment[]
+  attachments   Attachment[]
+  templates     TaskTemplate[]
+  timeEntries   TimeEntry[]
+  notifications Notification[]
+  teams         TeamMember[]
+  settings      UserSettings?
+
+  @@map("users")
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  color       String  @default("#3B82F6") // Default blue color
+  icon        String?
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+  templates TaskTemplate[]
+
+  @@unique([name, userId]) // Unique category name per user
+  @@map("categories")
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum RecurrenceType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum NotificationType {
+  TASK_DUE
+  TASK_OVERDUE
+  TASK_ASSIGNED
+  TASK_COMPLETED
+  COMMENT_ADDED
+}
+
+model Task {
+  id           String       @id @default(cuid())
+  title        String
+  description  String?
+  status       TaskStatus   @default(TODO)
+  priority     TaskPriority @default(MEDIUM)
+  dueDate      DateTime?
+  estimatedHours Float?
+  actualHours    Float?
+  progress     Int          @default(0) // 0-100 percentage
+  position     Int          @default(0) // For drag-and-drop ordering
+  tags         String[]     @default([]) // Task tags for filtering
+  userId       String
+  categoryId   String?
+  templateId   String?      // Reference to task template
+  parentTaskId String?      // For recurring tasks
+  assignedToId String?      // For team collaboration
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  completedAt  DateTime?    // Track completion time
+
+  // Relations
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category     Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  template     TaskTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  parentTask   Task?          @relation("RecurringTasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
+  childTasks   Task[]         @relation("RecurringTasks")
+  assignedTo   User?          @relation("AssignedTasks", fields: [assignedToId], references: [id], onDelete: SetNull)
+  comments     Comment[]
+  attachments  Attachment[]
+  dependencies TaskDependency[] @relation("DependentTask")
+  dependents   TaskDependency[] @relation("PrerequisiteTask")
+  timeEntries  TimeEntry[]
+  notifications Notification[]
+
+  @@index([userId, status])
+  @@index([userId, priority])
+  @@index([userId, dueDate])
+  @@index([userId, categoryId])
+  @@index([assignedToId])
+  @@map("tasks")
+}
+
+model TaskDependency {
+  id               String @id @default(cuid())
+  prerequisiteTaskId String
+  dependentTaskId    String
+  createdAt        DateTime @default(now())
+
+  // Relations
+  prerequisiteTask Task @relation("PrerequisiteTask", fields: [prerequisiteTaskId], references: [id], onDelete: Cascade)
+  dependentTask    Task @relation("DependentTask", fields: [dependentTaskId], references: [id], onDelete: Cascade)
+
+  @@unique([prerequisiteTaskId, dependentTaskId])
+  @@map("task_dependencies")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  taskId    String
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("comments")
+}
+
+model Attachment {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  mimeType     String
+  size         Int
+  path         String
+  taskId       String
+  userId       String
+  createdAt    DateTime @default(now())
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("attachments")
+}
+
+model TaskTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  priority    TaskPriority @default(MEDIUM)
+  estimatedHours Float?
+  tags        String[] @default([])
+  categoryId  String?
+  userId      String
+  isRecurring Boolean  @default(false)
+  recurrenceType RecurrenceType?
+  recurrenceInterval Int? // Every X days/weeks/months
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tasks    Task[]
+
+  @@index([userId])
+  @@map("task_templates")
+}
+
+model TimeEntry {
+  id          String   @id @default(cuid())
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int?     // Duration in minutes
+  taskId      String
+  userId      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+  @@map("time_entries")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  taskId    String?
+  userId    String
+  createdAt DateTime         @default(now())
+
+  // Relations
+  task Task? @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  members TeamMember[]
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id     String @id @default(cuid())
+  teamId String
+  userId String
+  role   String @default("member") // member, admin, owner
+  joinedAt DateTime @default(now())
+
+  // Relations
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+model UserSettings {
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  theme        String  @default("light") // light, dark, auto
+  language     String  @default("en")
+  timezone     String  @default("UTC")
+  notifications Json    @default("{}")
+  preferences  Json    @default("{}")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}

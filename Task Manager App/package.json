@@ -1,0 +1,30 @@
+{
+  "name": "task-manager-app",
+  "version": "1.0.0",
+  "description": "Comprehensive task management web application with drag-and-drop, calendar integration, and advanced features",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "server:dev": "cd server && npm run dev",
+    "client:dev": "cd client && npm run dev",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "test": "npm run test:client && npm run test:server",
+    "test:client": "cd client && npm test",
+    "test:server": "cd server && npm test",
+    "setup": "npm install && cd client && npm install && cd ../server && npm install"
+  },
+  "keywords": [
+    "task-management",
+    "productivity",
+    "drag-and-drop",
+    "calendar",
+    "react",
+    "nodejs"
+  ],
+  "author": "Task Manager Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
