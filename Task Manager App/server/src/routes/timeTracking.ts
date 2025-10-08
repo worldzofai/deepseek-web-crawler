@@ -1,14 +1,40 @@
 import { Router } from 'express'
+import Joi from 'joi'
 import { authenticate } from '../middleware/auth'
 import { prisma } from '../index'
 
 const router = Router()
 
+// Validation schemas
+const startTimeTrackingSchema = Joi.object({
+  taskId: Joi.string().required(),
+  description: Joi.string().optional().allow('').max(500),
+});
+
+const timeEntriesQuerySchema = Joi.object({
+  taskId: Joi.string().optional(),
+  startDate: Joi.date().iso().optional(),
+  endDate: Joi.date().iso().optional(),
+});
+
+const analyticsQuerySchema = Joi.object({
+  period: Joi.string().valid('1d', '7d', '30d', '90d').default('7d'),
+});
+
 // Get time entries for user
 router.get('/', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
-    const { taskId, startDate, endDate } = req.query
+    
+    const { error, value } = timeEntriesQuerySchema.validate(req.query)
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: { message: error.details[0]?.message || 'Validation error' }
+      })
+    }
+    
+    const { taskId, startDate, endDate } = value
 
     const where: any = { userId }
     
@@ -46,9 +72,10 @@ router.get('/', authenticate, async (req, res) => {
       }
     })
   } catch (error: any) {
+    console.error('Time tracking error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })
@@ -57,7 +84,16 @@ router.get('/', authenticate, async (req, res) => {
 router.post('/start', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
-    const { taskId, description } = req.body
+    
+    const { error, value } = startTimeTrackingSchema.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: { message: error.details[0]?.message || 'Validation error' }
+      })
+    }
+    
+    const { taskId, description } = value
 
     // Check if there's already an active timer
     const activeTimer = await prisma.timeEntry.findFirst({
@@ -93,9 +129,10 @@ router.post('/start', authenticate, async (req, res) => {
       data: timeEntry
     })
   } catch (error: any) {
+    console.error('Time tracking error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })
@@ -105,6 +142,14 @@ router.post('/stop/:id', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
     const { id } = req.params
+    
+    // Validate ID format
+    if (!id || typeof id !== 'string' || id.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Valid time entry ID is required' }
+      })
+    }
 
     const timeEntry = await (prisma as any).timeEntry.findFirst({
       where: { id, userId, endTime: null }
@@ -148,9 +193,10 @@ router.post('/stop/:id', authenticate, async (req, res) => {
       data: updatedEntry
     })
   } catch (error: any) {
+    console.error('Time tracking error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })
@@ -177,9 +223,10 @@ router.get('/active', authenticate, async (req, res) => {
       data: activeTimer
     })
   } catch (error: any) {
+    console.error('Time tracking error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })
@@ -188,7 +235,16 @@ router.get('/active', authenticate, async (req, res) => {
 router.get('/analytics', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
-    const { period = '7d' } = req.query
+    
+    const { error, value } = analyticsQuerySchema.validate(req.query)
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: { message: error.details[0]?.message || 'Validation error' }
+      })
+    }
+    
+    const { period } = value
 
     let startDate = new Date()
     switch (period) {
@@ -257,9 +313,10 @@ router.get('/analytics', authenticate, async (req, res) => {
       }
     })
   } catch (error: any) {
+    console.error('Time tracking error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })

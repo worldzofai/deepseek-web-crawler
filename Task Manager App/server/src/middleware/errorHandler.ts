@@ -46,11 +46,41 @@ export const errorHandler = (
     });
   }
 
-  // Default error
+  // Multer file upload errors
+  if (error.name === 'MulterError') {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'File size exceeds maximum limit of 5MB' }
+      });
+    }
+    if (error.code === 'LIMIT_FILE_COUNT') {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Too many files uploaded' }
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      error: { message: 'File upload error' }
+    });
+  }
+
+  // CORS errors
+  if (error.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      success: false,
+      error: { message: 'Access forbidden' }
+    });
+  }
+
+  // Default error - don't expose internal details in production
+  const message = process.env.NODE_ENV === 'production'
+    ? 'An unexpected error occurred'
+    : error.message || 'Internal server error';
+
   res.status(error.status || 500).json({
     success: false,
-    error: {
-      message: error.message || 'Internal server error'
-    }
+    error: { message }
   });
 };

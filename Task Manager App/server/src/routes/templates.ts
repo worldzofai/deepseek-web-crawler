@@ -1,9 +1,41 @@
 import { Router } from 'express'
 import { PrismaClient } from '@prisma/client'
+import Joi from 'joi'
 import { authenticate } from '../middleware/auth'
 
 const router = Router()
 const prisma = new PrismaClient()
+
+// Validation schemas
+const createTemplateSchema = Joi.object({
+  name: Joi.string().required().max(255),
+  description: Joi.string().optional().allow('').max(2000),
+  priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH').default('MEDIUM'),
+  estimatedHours: Joi.number().positive().optional().allow(null),
+  tags: Joi.array().items(Joi.string().max(50)).max(20).optional(),
+  categoryId: Joi.string().optional().allow(null),
+  isRecurring: Joi.boolean().default(false),
+  recurrenceType: Joi.string().valid('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY').optional().allow(null),
+  recurrenceInterval: Joi.number().integer().positive().optional().allow(null),
+});
+
+const updateTemplateSchema = Joi.object({
+  name: Joi.string().optional().max(255),
+  description: Joi.string().optional().allow('').max(2000),
+  priority: Joi.string().valid('LOW', 'MEDIUM', 'HIGH').optional(),
+  estimatedHours: Joi.number().positive().optional().allow(null),
+  tags: Joi.array().items(Joi.string().max(50)).max(20).optional(),
+  categoryId: Joi.string().optional().allow(null),
+  isRecurring: Joi.boolean().optional(),
+  recurrenceType: Joi.string().valid('DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY').optional().allow(null),
+  recurrenceInterval: Joi.number().integer().positive().optional().allow(null),
+});
+
+const createTaskFromTemplateSchema = Joi.object({
+  title: Joi.string().optional().max(255),
+  dueDate: Joi.date().iso().optional().allow(null),
+  customDescription: Joi.string().optional().allow('').max(2000),
+});
 
 // Get all templates for user
 router.get('/', authenticate, async (req, res) => {
@@ -26,9 +58,10 @@ router.get('/', authenticate, async (req, res) => {
       data: templates
     })
   } catch (error: any) {
+    console.error('Template error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })
@@ -37,6 +70,15 @@ router.get('/', authenticate, async (req, res) => {
 router.post('/', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
+    
+    const { error, value } = createTemplateSchema.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: { message: error.details[0]?.message || 'Validation error' }
+      })
+    }
+
     const {
       name,
       description,
@@ -47,7 +89,7 @@ router.post('/', authenticate, async (req, res) => {
       isRecurring,
       recurrenceType,
       recurrenceInterval
-    } = req.body
+    } = value
 
     const template = await prisma.taskTemplate.create({
       data: {
@@ -72,9 +114,10 @@ router.post('/', authenticate, async (req, res) => {
       data: template
     })
   } catch (error: any) {
+    console.error('Template error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })
@@ -84,6 +127,23 @@ router.put('/:id', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
     const { id } = req.params
+    
+    // Validate ID format
+    if (!id || typeof id !== 'string' || id.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Valid template ID is required' }
+      })
+    }
+    
+    const { error, value } = updateTemplateSchema.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: { message: error.details[0]?.message || 'Validation error' }
+      })
+    }
+
     const {
       name,
       description,
@@ -94,7 +154,7 @@ router.put('/:id', authenticate, async (req, res) => {
       isRecurring,
       recurrenceType,
       recurrenceInterval
-    } = req.body
+    } = value
 
     const template = await prisma.taskTemplate.update({
       where: { id, userId },
@@ -119,9 +179,10 @@ router.put('/:id', authenticate, async (req, res) => {
       data: template
     })
   } catch (error: any) {
+    console.error('Template error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })
@@ -131,6 +192,14 @@ router.delete('/:id', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
     const { id } = req.params
+    
+    // Validate ID format
+    if (!id || typeof id !== 'string' || id.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Valid template ID is required' }
+      })
+    }
 
     await prisma.taskTemplate.delete({
       where: { id, userId }
@@ -141,9 +210,10 @@ router.delete('/:id', authenticate, async (req, res) => {
       message: 'Template deleted successfully'
     })
   } catch (error: any) {
+    console.error('Template error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })
@@ -153,7 +223,24 @@ router.post('/:id/create-task', authenticate, async (req, res) => {
   try {
     const userId = (req as any).user.id
     const { id } = req.params
-    const { title, dueDate, customDescription } = req.body
+    
+    // Validate ID format
+    if (!id || typeof id !== 'string' || id.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Valid template ID is required' }
+      })
+    }
+    
+    const { error, value } = createTaskFromTemplateSchema.validate(req.body)
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        error: { message: error.details[0]?.message || 'Validation error' }
+      })
+    }
+    
+    const { title, dueDate, customDescription } = value
 
     const template = await prisma.taskTemplate.findFirst({
       where: { id, userId }
@@ -192,9 +279,10 @@ router.post('/:id/create-task', authenticate, async (req, res) => {
       data: task
     })
   } catch (error: any) {
+    console.error('Template error:', error)
     res.status(500).json({
       success: false,
-      error: { message: error.message }
+      error: { message: 'An error occurred while processing your request' }
     })
   }
 })

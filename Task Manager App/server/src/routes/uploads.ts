@@ -2,10 +2,35 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { prisma } from '../index';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth';
 
 const router = express.Router();
+
+// Allowed MIME types for uploads
+const ALLOWED_MIME_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/webp',
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'text/plain',
+  'text/csv'
+];
+
+// Maximum file size (5MB)
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+// Sanitize filename to prevent path traversal
+const sanitizeFilename = (filename: string): string => {
+  // Remove any directory path components
+  return path.basename(filename).replace(/[^a-zA-Z0-9.-]/g, '_');
+};
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -20,17 +45,30 @@ const storage = multer.diskStorage({
     cb(null, uploadPath);
   },
   filename: (req: any, file: any, cb: any) => {
-    // Generate unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const ext = path.extname(file.originalname);
-    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+    // Generate cryptographically secure unique filename
+    const uniqueSuffix = crypto.randomBytes(16).toString('hex');
+    const sanitizedOriginal = sanitizeFilename(file.originalname);
+    const ext = path.extname(sanitizedOriginal);
+    const basename = path.basename(sanitizedOriginal, ext);
+    cb(null, `${basename}-${uniqueSuffix}${ext}`);
   }
 });
 
+// File filter to validate MIME types
+const fileFilter = (req: any, file: any, cb: any) => {
+  if (ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error(`Invalid file type. Allowed types: ${ALLOWED_MIME_TYPES.join(', ')}`), false);
+  }
+};
+
 const upload = multer({
   storage,
+  fileFilter,
   limits: {
-    fileSize: parseInt(process.env.MAX_FILE_SIZE || '5242880'), // 5MB default
+    fileSize: MAX_FILE_SIZE,
+    files: 1 // Only allow one file at a time
   },
 });
 
@@ -48,12 +86,15 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthenticatedR
 
     const { taskId } = req.body;
 
-    if (!taskId) {
-      // Clean up uploaded file if taskId is missing
-      fs.unlinkSync(req.file.path);
+    // Validate taskId format (assuming UUID)
+    if (!taskId || typeof taskId !== 'string' || taskId.length === 0) {
+      // Clean up uploaded file if taskId is invalid
+      if (fs.existsSync(req.file.path)) {
+        fs.unlinkSync(req.file.path);
+      }
       return res.status(400).json({
         success: false,
-        error: { message: 'Task ID is required' },
+        error: { message: 'Valid task ID is required' },
       });
     }
 
@@ -74,11 +115,14 @@ router.post('/', authenticate, upload.single('file'), async (req: AuthenticatedR
       });
     }
 
+    // Sanitize and validate file data
+    const sanitizedOriginalName = sanitizeFilename(req.file.originalname);
+    
     // Create attachment record
     const attachment = await prisma.attachment.create({
       data: {
         filename: req.file.filename,
-        originalName: req.file.originalname,
+        originalName: sanitizedOriginalName,
         mimeType: req.file.mimetype,
         size: req.file.size,
         path: req.file.path,
@@ -107,6 +151,14 @@ router.delete('/:id', authenticate, async (req: AuthenticatedRequest, res: any, 
   try {
     const { id } = req.params;
 
+    // Validate ID format
+    if (!id || typeof id !== 'string' || id.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: { message: 'Valid attachment ID is required' },
+      });
+    }
+
     const attachment = await prisma.attachment.findFirst({
       where: {
         id: id as string,
@@ -121,9 +173,17 @@ router.delete('/:id', authenticate, async (req: AuthenticatedRequest, res: any, 
       });
     }
 
-    // Delete file from disk
+    // Delete file from disk securely
     if (fs.existsSync(attachment.path)) {
-      fs.unlinkSync(attachment.path);
+      // Verify the path is within the upload directory to prevent path traversal
+      const uploadPath = path.resolve(process.env.UPLOAD_PATH || './uploads');
+      const filePath = path.resolve(attachment.path);
+      
+      if (filePath.startsWith(uploadPath)) {
+        fs.unlinkSync(filePath);
+      } else {
+        console.error('Attempted path traversal detected:', filePath);
+      }
     }
 
     // Delete attachment record
