@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KAFFE — Prague's Finest Coffee House</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Montserrat:wght@200;300;400;500;600&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --gold-light: #e8c97a;
+      --gold-dim: #9a7a38;
+      --dark: #080808;
+      --dark-2: #0f0f0f;
+      --dark-3: #161616;
+      --dark-4: #1e1e1e;
+      --text: #f0ebe0;
+      --text-muted: #8a7f70;
+      --text-dim: #5a5248;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--dark);
+      color: var(--text);
+      font-family: 'Montserrat', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--dark); }
+    ::-webkit-scrollbar-thumb { background: var(--gold-dim); border-radius: 2px; }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 28px 60px;
+      transition: background 0.4s, padding 0.4s, backdrop-filter 0.4s;
+    }
+    nav.scrolled {
+      background: rgba(8,8,8,0.92);
+      backdrop-filter: blur(12px);
+      padding: 18px 60px;
+      border-bottom: 1px solid rgba(201,168,76,0.12);
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      letter-spacing: 0.3em;
+      color: var(--gold);
+      text-decoration: none;
+      font-weight: 700;
+    }
+    .nav-links {
+      display: flex; gap: 40px; list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      font-weight: 500;
+      transition: color 0.3s;
+    }
+    .nav-links a:hover { color: var(--gold); }
+    .nav-reserve {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    .nav-reserve:hover {
+      background: var(--gold);
+      color: var(--dark);
+    }
+    .nav-menu-btn { display: none; background: none; border: none; cursor: pointer; flex-direction: column; gap: 5px; }
+    .nav-menu-btn span { display: block; width: 24px; height: 1px; background: var(--gold); transition: all 0.3s; }
+
+    /* ── HERO ── */
+    #hero {
+      height: 100vh; position: relative;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background-image: url('https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1920&q=80');
+      background-size: cover; background-position: center;
+      filter: brightness(0.35);
+      transform: scale(1.05);
+      transition: transform 8s ease;
+    }
+    #hero:hover .hero-bg { transform: scale(1.0); }
+    .hero-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 30%, rgba(8,8,8,0.6) 70%, var(--dark) 100%);
+    }
+    .hero-content {
+      position: relative; z-index: 1;
+      text-align: center; max-width: 900px; padding: 0 40px;
+    }
+    .hero-eyebrow {
+      font-size: 0.65rem; letter-spacing: 0.4em; text-transform: uppercase;
+      color: var(--gold); font-weight: 500; margin-bottom: 24px;
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp 0.8s forwards 0.3s;
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(3.5rem, 8vw, 7rem);
+      font-weight: 900;
+      line-height: 0.95;
+      letter-spacing: -0.02em;
+      margin-bottom: 30px;
+      opacity: 0; transform: translateY(30px);
+      animation: fadeUp 1s forwards 0.5s;
+    }
+    .hero-title em {
+      font-style: italic; color: var(--gold);
+    }
+    .hero-subtitle {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.2rem;
+      font-style: italic;
+      color: var(--text-muted);
+      margin-bottom: 50px;
+      font-weight: 300;
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp 0.8s forwards 0.8s;
+    }
+    .hero-cta {
+      display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;
+      opacity: 0; transform: translateY(20px);
+      animation: fadeUp 0.8s forwards 1s;
+    }
+    .btn-primary {
+      background: var(--gold);
+      color: var(--dark);
+      border: none;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 16px 36px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-primary:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid rgba(240,235,224,0.3);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      font-weight: 500;
+      padding: 16px 36px;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+    .hero-scroll {
+      position: absolute; bottom: 40px; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px;
+      opacity: 0; animation: fadeIn 0.8s forwards 1.5s;
+    }
+    .hero-scroll span {
+      font-size: 0.55rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--text-dim);
+    }
+    .scroll-line {
+      width: 1px; height: 50px; background: var(--gold-dim);
+      animation: scrollPulse 2s ease-in-out infinite;
+    }
+
+    /* ── SECTION COMMONS ── */
+    section { position: relative; }
+    .section-eyebrow {
+      font-size: 0.6rem; letter-spacing: 0.4em; text-transform: uppercase;
+      color: var(--gold); font-weight: 500; margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 900; line-height: 1;
+      text-transform: uppercase;
+    }
+
+    /* ── MARQUEE ── */
+    .marquee-wrap {
+      background: var(--gold);
+      padding: 14px 0;
+      overflow: hidden;
+    }
+    .marquee-track {
+      display: flex; gap: 0;
+      animation: marquee 20s linear infinite;
+      white-space: nowrap;
+    }
+    .marquee-item {
+      font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--dark); font-weight: 600;
+      padding: 0 40px;
+    }
+    .marquee-dot {
+      color: rgba(8,8,8,0.4); padding: 0;
+    }
+
+    /* ── EXPERIENCE ── */
+    #experience {
+      padding: 120px 60px;
+      background: var(--dark);
+    }
+    .experience-header {
+      display: flex; justify-content: space-between; align-items: flex-end;
+      margin-bottom: 70px; gap: 40px;
+    }
+    .experience-quote {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      text-align: right;
+      max-width: 280px;
+      line-height: 1.6;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+    }
+    .feature-card {
+      position: relative; overflow: hidden;
+      background: var(--dark-3);
+      cursor: pointer;
+    }
+    .feature-card:hover .card-img { transform: scale(1.08); filter: brightness(0.6); }
+    .card-img-wrap {
+      height: 280px; overflow: hidden;
+    }
+    .card-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.7);
+      transition: transform 0.6s ease, filter 0.6s ease;
+    }
+    .card-body {
+      padding: 24px 28px 28px;
+      background: var(--dark-3);
+      border-top: 1px solid rgba(201,168,76,0.15);
+    }
+    .card-title {
+      font-size: 0.7rem; letter-spacing: 0.2em;
+      text-transform: uppercase; font-weight: 600;
+      margin-bottom: 10px; color: var(--text);
+    }
+    .card-desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+    .card-hover-line {
+      position: absolute; bottom: 0; left: 0;
+      height: 2px; width: 0; background: var(--gold);
+      transition: width 0.5s ease;
+    }
+    .feature-card:hover .card-hover-line { width: 100%; }
+
+    /* ── STATS ── */
+    #stats {
+      padding: 80px 60px;
+      background: var(--dark-2);
+      border-top: 1px solid rgba(201,168,76,0.1);
+      border-bottom: 1px solid rgba(201,168,76,0.1);
+    }
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 40px; text-align: center;
+    }
+    .stat-number {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 4vw, 3.5rem);
+      font-weight: 700;
+      color: var(--gold);
+      line-height: 1;
+      margin-bottom: 10px;
+    }
+    .stat-label {
+      font-size: 0.6rem; letter-spacing: 0.25em;
+      text-transform: uppercase; color: var(--text-muted);
+      font-weight: 500;
+    }
+    .stat-divider {
+      width: 1px;
+      background: linear-gradient(to bottom, transparent, rgba(201,168,76,0.3), transparent);
+    }
+
+    /* ── MENU ── */
+    #menu {
+      padding: 120px 60px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px;
+      align-items: start;
+    }
+    .menu-visual {
+      position: sticky; top: 120px;
+    }
+    .menu-img-wrap {
+      position: relative;
+    }
+    .menu-img-main {
+      width: 100%; height: 500px;
+      object-fit: cover;
+      filter: brightness(0.8);
+    }
+    .menu-img-accent {
+      position: absolute;
+      bottom: -30px; right: -30px;
+      width: 200px; height: 200px;
+      object-fit: cover;
+      border: 3px solid var(--dark);
+      filter: brightness(0.75);
+    }
+    .menu-gold-line {
+      position: absolute;
+      top: -20px; left: -20px;
+      width: 80px; height: 80px;
+      border-top: 2px solid var(--gold);
+      border-left: 2px solid var(--gold);
+    }
+    .menu-content {}
+    .menu-categories {
+      display: flex; gap: 0; margin: 32px 0 48px; border-bottom: 1px solid rgba(240,235,224,0.1);
+    }
+    .menu-cat {
+      font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+      padding: 12px 24px; cursor: pointer; color: var(--text-muted);
+      font-weight: 500; border-bottom: 2px solid transparent;
+      transition: all 0.3s; position: relative; top: 1px;
+    }
+    .menu-cat.active { color: var(--gold); border-bottom-color: var(--gold); }
+    .menu-cat:hover { color: var(--text); }
+    .menu-items { display: flex; flex-direction: column; gap: 0; }
+    .menu-item {
+      padding: 22px 0;
+      border-bottom: 1px solid rgba(240,235,224,0.07);
+      display: flex; justify-content: space-between; align-items: start;
+      gap: 20px;
+      transition: border-color 0.3s;
+      cursor: pointer;
+    }
+    .menu-item:hover { border-bottom-color: rgba(201,168,76,0.25); }
+    .menu-item:hover .item-name { color: var(--gold); }
+    .item-left { flex: 1; }
+    .item-name {
+      font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
+      font-weight: 600; margin-bottom: 6px; transition: color 0.3s;
+    }
+    .item-desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .item-tag {
+      display: inline-block;
+      font-size: 0.5rem; letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--gold); border: 1px solid var(--gold-dim);
+      padding: 2px 8px; margin-top: 8px;
+    }
+    .item-price {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      color: var(--gold);
+      white-space: nowrap;
+      font-weight: 400;
+    }
+    .item-price sup { font-size: 0.6rem; vertical-align: super; }
+
+    /* ── STORY ── */
+    #story {
+      padding: 0;
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+    .story-visual {
+      position: relative; overflow: hidden;
+    }
+    .story-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.55);
+    }
+    .story-img-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to right, transparent 60%, var(--dark));
+    }
+    .story-content {
+      padding: 100px 80px 100px 60px;
+      display: flex; flex-direction: column; justify-content: center;
+      background: var(--dark);
+    }
+    .story-year {
+      font-family: 'Playfair Display', serif;
+      font-size: 6rem; font-weight: 900;
+      color: rgba(201,168,76,0.08);
+      line-height: 1;
+      margin-bottom: -20px;
+    }
+    .story-text {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.15rem;
+      line-height: 1.9;
+      color: var(--text-muted);
+      margin: 28px 0 40px;
+    }
+    .story-text strong { color: var(--text); font-weight: 400; font-style: italic; }
+    .story-signature {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.8rem;
+      color: var(--gold-dim);
+      margin-top: 20px;
+    }
+
+    /* ── GALLERY ── */
+    #gallery {
+      padding: 100px 0;
+      background: var(--dark);
+      overflow: hidden;
+    }
+    .gallery-header {
+      padding: 0 60px; margin-bottom: 50px;
+      display: flex; justify-content: space-between; align-items: flex-end;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr 1.2fr;
+      grid-template-rows: 220px 180px;
+      gap: 3px;
+    }
+    .gallery-item {
+      overflow: hidden; position: relative;
+    }
+    .gallery-item:nth-child(1) { grid-row: span 2; }
+    .gallery-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      filter: brightness(0.75) saturate(0.8);
+      transition: transform 0.7s ease, filter 0.5s ease;
+    }
+    .gallery-item:hover img {
+      transform: scale(1.06);
+      filter: brightness(0.9) saturate(1);
+    }
+
+    /* ── RESERVE ── */
+    #reserve {
+      padding: 120px 60px;
+      background: var(--dark-2);
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 80px;
+      align-items: center;
+    }
+    .reserve-info {}
+    .reserve-info p {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      margin: 24px 0 40px;
+    }
+    .contact-list { list-style: none; display: flex; flex-direction: column; gap: 16px; }
+    .contact-list li {
+      display: flex; align-items: center; gap: 16px;
+      font-size: 0.75rem; color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+    .contact-list .icon {
+      width: 36px; height: 36px;
+      border: 1px solid var(--gold-dim);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; color: var(--gold); flex-shrink: 0;
+    }
+    .reserve-form {
+      background: var(--dark-3);
+      padding: 50px;
+      border: 1px solid rgba(201,168,76,0.12);
+    }
+    .form-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem; font-weight: 700;
+      margin-bottom: 32px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
+    .form-group label {
+      font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: var(--text-muted); font-weight: 500;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      background: var(--dark-4);
+      border: 1px solid rgba(240,235,224,0.08);
+      color: var(--text);
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.8rem;
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color 0.3s;
+      width: 100%;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--gold);
+    }
+    .form-group select option { background: var(--dark-4); }
+    .form-group textarea { resize: vertical; min-height: 80px; }
+    .form-submit {
+      width: 100%;
+      background: var(--gold);
+      color: var(--dark);
+      border: none;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 8px;
+    }
+    .form-submit:hover { background: var(--gold-light); }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--dark-2);
+      padding: 60px 60px 30px;
+      border-top: 1px solid rgba(201,168,76,0.12);
+    }
+    .footer-top {
+      display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr;
+      gap: 60px; margin-bottom: 60px;
+    }
+    .footer-brand .nav-logo { display: block; margin-bottom: 16px; font-size: 1.8rem; }
+    .footer-brand p {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic; font-size: 0.95rem;
+      color: var(--text-dim); line-height: 1.7;
+    }
+    .footer-col h4 {
+      font-size: 0.55rem; letter-spacing: 0.3em; text-transform: uppercase;
+      color: var(--gold); font-weight: 600; margin-bottom: 20px;
+    }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .footer-col ul li a {
+      color: var(--text-dim); text-decoration: none;
+      font-size: 0.75rem; transition: color 0.3s;
+    }
+    .footer-col ul li a:hover { color: var(--gold); }
+    .footer-hours { display: flex; flex-direction: column; gap: 8px; }
+    .hour-row { display: flex; justify-content: space-between; font-size: 0.7rem; }
+    .hour-day { color: var(--text-dim); }
+    .hour-time { color: var(--text-muted); }
+    .footer-bottom {
+      padding-top: 30px;
+      border-top: 1px solid rgba(240,235,224,0.05);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .footer-copy { font-size: 0.65rem; color: var(--text-dim); }
+    .footer-social { display: flex; gap: 16px; }
+    .social-link {
+      width: 34px; height: 34px;
+      border: 1px solid rgba(201,168,76,0.2);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-muted); text-decoration: none;
+      font-size: 0.75rem; transition: all 0.3s;
+    }
+    .social-link:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+    @keyframes scrollPulse {
+      0%, 100% { transform: scaleY(1); opacity: 1; }
+      50% { transform: scaleY(0.7); opacity: 0.5; }
+    }
+    @keyframes marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-50%); }
+    }
+
+    /* ── REVEAL ── */
+    .reveal {
+      opacity: 0; transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .reveal.visible {
+      opacity: 1; transform: translateY(0);
+    }
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 1024px) {
+      nav { padding: 20px 30px; }
+      nav.scrolled { padding: 14px 30px; }
+      .nav-links { gap: 24px; }
+      #experience, #stats, footer { padding-left: 30px; padding-right: 30px; }
+      #menu { padding: 80px 30px; gap: 50px; }
+      #reserve { padding: 80px 30px; gap: 50px; }
+      .story-content { padding: 80px 40px; }
+      .gallery-header { padding: 0 30px; }
+      .footer-top { grid-template-columns: 1fr 1fr; gap: 40px; }
+    }
+    @media (max-width: 768px) {
+      .nav-links, .nav-reserve { display: none; }
+      .nav-menu-btn { display: flex; }
+      .hero-title { font-size: clamp(2.8rem, 10vw, 5rem); }
+      .cards-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .stat-divider { display: none; }
+      #menu { grid-template-columns: 1fr; }
+      .menu-visual { position: static; }
+      #story { grid-template-columns: 1fr; }
+      .story-visual { height: 40vh; }
+      .gallery-grid {
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto;
+      }
+      .gallery-item:nth-child(1) { grid-row: span 1; }
+      #reserve { grid-template-columns: 1fr; }
+      .reserve-form { padding: 30px; }
+      .form-row { grid-template-columns: 1fr; }
+      .footer-top { grid-template-columns: 1fr; gap: 30px; }
+      .experience-header { flex-direction: column; align-items: flex-start; }
+      .experience-quote { text-align: left; }
+    }
+
+    /* ── CURSOR DOT ── */
+    .cursor-dot {
+      width: 8px; height: 8px;
+      background: var(--gold);
+      border-radius: 50%;
+      position: fixed; pointer-events: none; z-index: 9999;
+      transform: translate(-50%, -50%);
+      transition: transform 0.1s, width 0.3s, height 0.3s, opacity 0.3s;
+    }
+    .cursor-ring {
+      width: 36px; height: 36px;
+      border: 1px solid rgba(201,168,76,0.5);
+      border-radius: 50%;
+      position: fixed; pointer-events: none; z-index: 9998;
+      transform: translate(-50%, -50%);
+      transition: all 0.15s ease;
+    }
+
+    /* ── MENU PANEL TABS ── */
+    .menu-panel { display: none; }
+    .menu-panel.active { display: block; }
+
+    /* ── NOISE TEXTURE ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+      background-size: 200px 200px;
+      opacity: 0.4;
+      pointer-events: none;
+      z-index: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CURSOR -->
+  <div class="cursor-dot" id="cursorDot"></div>
+  <div class="cursor-ring" id="cursorRing"></div>
+
+  <!-- NAV -->
+  <nav id="navbar">
+    <a href="#" class="nav-logo">KAFFE</a>
+    <ul class="nav-links">
+      <li><a href="#experience">Experience</a></li>
+      <li><a href="#menu">Menu</a></li>
+      <li><a href="#story">Our Story</a></li>
+      <li><a href="#gallery">Gallery</a></li>
+      <li><a href="#reserve">Visit Us</a></li>
+    </ul>
+    <button class="nav-reserve" onclick="document.getElementById('reserve').scrollIntoView({behavior:'smooth'})">Reserve a Table</button>
+    <button class="nav-menu-btn" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="hero-bg" id="heroBg"></div>
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Prague, Since 1924</p>
+      <h1 class="hero-title">Where Coffee<br />Becomes <em>Art</em></h1>
+      <p class="hero-subtitle">A sanctuary of exceptional coffee, artisan pastries,<br />and timeless atmosphere.</p>
+      <div class="hero-cta">
+        <a href="#menu" class="btn-primary">Explore Menu</a>
+        <a href="#story" class="btn-outline">Our Story</a>
+      </div>
+    </div>
+    <div class="hero-scroll">
+      <span>Scroll</span>
+      <div class="scroll-line"></div>
+    </div>
+  </section>
+
+  <!-- MARQUEE -->
+  <div class="marquee-wrap">
+    <div class="marquee-track" id="marqueeTrack">
+      <span class="marquee-item">Single-Origin Beans</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Artisan Pastries</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Historic Setting</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Hand-Crafted Espresso</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Prague's Finest Since 1924</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Single-Origin Beans</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Artisan Pastries</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Historic Setting</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Hand-Crafted Espresso</span>
+      <span class="marquee-item marquee-dot">✦</span>
+      <span class="marquee-item">Prague's Finest Since 1924</span>
+      <span class="marquee-item marquee-dot">✦</span>
+    </div>
+  </div>
+
+  <!-- EXPERIENCE -->
+  <section id="experience">
+    <div class="experience-header reveal">
+      <div>
+        <p class="section-eyebrow">The Experience</p>
+        <h2 class="section-title">Crafted With<br />Intention</h2>
+      </div>
+      <p class="experience-quote">Every detail considered.<br />Every moment savored.</p>
+    </div>
+    <div class="cards-grid">
+      <div class="feature-card reveal reveal-delay-1">
+        <div class="card-img-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&q=80" alt="Artisan Pastries" />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Artisan Pastries</h3>
+          <p class="card-desc">Baked fresh each morning using traditional Czech recipes, perfected over three generations.</p>
+        </div>
+        <div class="card-hover-line"></div>
+      </div>
+      <div class="feature-card reveal reveal-delay-2">
+        <div class="card-img-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=600&q=80" alt="Single-Origin Beans" />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Single-Origin Beans</h3>
+          <p class="card-desc">Ethically sourced from small farms. Roasted fresh weekly in our cellar by our master roaster.</p>
+        </div>
+        <div class="card-hover-line"></div>
+      </div>
+      <div class="feature-card reveal reveal-delay-3">
+        <div class="card-img-wrap">
+          <img class="card-img" src="https://images.unsplash.com/photo-1559305616-3f99cd43e353?w=600&q=80" alt="Historic Setting" />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Historic Setting</h3>
+          <p class="card-desc">A faithfully preserved 19th-century interior with original Viennese café furnishings and frescoes.</p>
+        </div>
+        <div class="card-hover-line"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section id="stats">
+    <div class="stats-grid">
+      <div class="reveal" style="text-align:center">
+        <div class="stat-number" data-target="100">0</div>
+        <div class="stat-label">Years of Craft</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="reveal reveal-delay-1" style="text-align:center">
+        <div class="stat-number" data-target="37">0</div>
+        <div class="stat-label">Origins on Rotation</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="reveal reveal-delay-2" style="text-align:center">
+        <div class="stat-number" data-target="240">0</div>
+        <div class="stat-label">Seats & Private Rooms</div>
+      </div>
+      <div class="stat-divider"></div>
+      <div class="reveal reveal-delay-3" style="text-align:center">
+        <div class="stat-number" data-target="12">0</div>
+        <div class="stat-label">Awards Won</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MENU -->
+  <section id="menu">
+    <div class="menu-visual reveal">
+      <div class="menu-img-wrap">
+        <div class="menu-gold-line"></div>
+        <img class="menu-img-main" src="https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=800&q=80" alt="Coffee being poured" />
+        <img class="menu-img-accent" src="https://images.unsplash.com/photo-1516743619420-154b70a65fea?w=400&q=80" alt="Latte art" />
+      </div>
+    </div>
+    <div class="menu-content reveal reveal-delay-2">
+      <p class="section-eyebrow">The Menu</p>
+      <h2 class="section-title">Signature<br />Selections</h2>
+      <nav class="menu-categories">
+        <button class="menu-cat active" data-panel="espresso">Espresso</button>
+        <button class="menu-cat" data-panel="specialty">Specialty</button>
+        <button class="menu-cat" data-panel="pastries">Pastries</button>
+        <button class="menu-cat" data-panel="seasonal">Seasonal</button>
+      </nav>
+
+      <!-- ESPRESSO -->
+      <div class="menu-panel active" id="panel-espresso">
+        <div class="menu-items">
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Prague Velvet</div>
+              <div class="item-desc">Double ristretto, steamed cream, a touch of bitter chocolate and cardamom.</div>
+              <span class="item-tag">House Signature</span>
+            </div>
+            <div class="item-price"><sup>Kč</sup>125</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Bohemian Black</div>
+              <div class="item-desc">Single-origin Ethiopian espresso. Pure, unfiltered, extraordinary.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>95</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Café Royal</div>
+              <div class="item-desc">Double espresso with crème brûlée foam and Madagascar vanilla.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>140</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Vienna Classic</div>
+              <div class="item-desc">Traditional Viennese melange with hand-whipped cream and a dusting of cinnamon.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>110</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Dark Forest</div>
+              <div class="item-desc">Cold brew concentrate, cherry reduction, oat cream. Served over black ice.</div>
+              <span class="item-tag">Cold</span>
+            </div>
+            <div class="item-price"><sup>Kč</sup>155</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SPECIALTY -->
+      <div class="menu-panel" id="panel-specialty">
+        <div class="menu-items">
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Siphon Pour</div>
+              <div class="item-desc">Tableside vacuum-brewed Yirgacheffe. A 7-minute ritual worth every second.</div>
+              <span class="item-tag">Tableside</span>
+            </div>
+            <div class="item-price"><sup>Kč</sup>220</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Cold Drip Tower</div>
+              <div class="item-desc">12-hour slow-dripped single origin. Clean, complex, silky.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>185</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Chemex Heritage</div>
+              <div class="item-desc">Anaerobic-processed Colombian in our house Chemex. Bright and wine-forward.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>170</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Aged Rum Espresso Martini</div>
+              <div class="item-desc">Our house espresso, Havana Club, coffee liqueur. Evening ritual.</div>
+              <span class="item-tag">Evening Only</span>
+            </div>
+            <div class="item-price"><sup>Kč</sup>280</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PASTRIES -->
+      <div class="menu-panel" id="panel-pastries">
+        <div class="menu-items">
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Kouign-Amann</div>
+              <div class="item-desc">French-Breton caramelized pastry. Buttery, flaky, devastating.</div>
+              <span class="item-tag">Baked Daily</span>
+            </div>
+            <div class="item-price"><sup>Kč</sup>85</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Prague Trdelník</div>
+              <div class="item-desc">Traditional chimney cake with almond cream, seasonal fruit, and gold leaf.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>120</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Cardamom Croissant</div>
+              <div class="item-desc">72-hour laminated dough, cardamom frangipane, rose water glaze.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>95</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Chocolate Fondant</div>
+              <div class="item-desc">70% dark Belgian chocolate, Himalayan salt, single malt whisky center.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>145</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEASONAL -->
+      <div class="menu-panel" id="panel-seasonal">
+        <div class="menu-items">
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Winter Spice Latte</div>
+              <div class="item-desc">Saffron, clove, and star anise-infused milk with double ristretto.</div>
+              <span class="item-tag">Feb 2026</span>
+            </div>
+            <div class="item-price"><sup>Kč</sup>165</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Honey Lavender Cortado</div>
+              <div class="item-desc">Provencal lavender honey, steamed oat milk, Guatemalan espresso.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>145</div>
+          </div>
+          <div class="menu-item">
+            <div class="item-left">
+              <div class="item-name">Black Sesame Flat White</div>
+              <div class="item-desc">Japanese black sesame paste, miso caramel, micro-foamed milk.</div>
+            </div>
+            <div class="item-price"><sup>Kč</sup>155</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STORY -->
+  <section id="story">
+    <div class="story-visual">
+      <img class="story-img" src="https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=900&q=80" alt="Historic café interior" />
+      <div class="story-img-overlay"></div>
+    </div>
+    <div class="story-content">
+      <div class="story-year reveal">1924</div>
+      <p class="section-eyebrow reveal">Our Story</p>
+      <h2 class="section-title reveal">A Century<br />of Coffee</h2>
+      <p class="story-text reveal reveal-delay-1">
+        In the winter of 1924, <strong>Jan Kaffe</strong> opened the doors of this café on Malá Strana, Prague —
+        a refuge for writers, artists, and philosophers seeking warmth and extraordinary coffee.<br /><br />
+        A century on, we carry that same spirit. The <strong>original Viennese chairs</strong>, the hand-painted ceiling,
+        the smell of fresh roast mingling with history — none of it has changed. Only the coffee has gotten better.
+      </p>
+      <a href="#reserve" class="btn-primary reveal reveal-delay-2" style="display:inline-block">Visit Us Today</a>
+      <div class="story-signature reveal reveal-delay-3">Jan Kaffe</div>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="gallery">
+    <div class="gallery-header">
+      <div>
+        <p class="section-eyebrow reveal">Inside Kaffe</p>
+        <h2 class="section-title reveal">The Atmosphere</h2>
+      </div>
+      <a href="#reserve" class="btn-outline reveal">Book a Visit</a>
+    </div>
+    <div class="gallery-grid">
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1554118811-1e0d58224f24?w=600&q=80" alt="Café interior" />
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1442512595331-e89e73853f31?w=600&q=80" alt="Coffee cup" />
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1521302080334-4bebac2763a6?w=600&q=80" alt="Barista" />
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1515442261605-65987783cb6a?w=600&q=80" alt="Latte art" />
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1498804103079-a6351b050096?w=600&q=80" alt="Pastry" />
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=600&q=80" alt="Coffee beans" />
+      </div>
+      <div class="gallery-item">
+        <img src="https://images.unsplash.com/photo-1528698827591-e19ccd7bc23d?w=600&q=80" alt="Café window" />
+      </div>
+    </div>
+  </section>
+
+  <!-- RESERVE -->
+  <section id="reserve">
+    <div class="reserve-info">
+      <p class="section-eyebrow reveal">Visit Us</p>
+      <h2 class="section-title reveal">Reserve Your<br />Moment</h2>
+      <p class="reveal reveal-delay-1">
+        Whether for a quiet morning espresso or a private evening gathering,
+        we'd love to welcome you. Reserve a table or enquire about our private dining rooms.
+      </p>
+      <ul class="contact-list reveal reveal-delay-2">
+        <li>
+          <span class="icon">✦</span>
+          <span>Malostranské náměstí 2/25, 118 00 Prague 1</span>
+        </li>
+        <li>
+          <span class="icon">✦</span>
+          <span>+420 257 534 081</span>
+        </li>
+        <li>
+          <span class="icon">✦</span>
+          <span>hello@kaffeprague.cz</span>
+        </li>
+        <li>
+          <span class="icon">✦</span>
+          <span>Mon – Fri 7:00 – 22:00 · Sat – Sun 8:00 – 23:00</span>
+        </li>
+      </ul>
+    </div>
+    <div class="reserve-form reveal reveal-delay-2">
+      <h3 class="form-title">Make a Reservation</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" placeholder="Jan" />
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" placeholder="Novák" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" />
+        </div>
+        <div class="form-group">
+          <label>Time</label>
+          <select>
+            <option>Morning (7:00–11:00)</option>
+            <option>Lunch (11:00–14:00)</option>
+            <option selected>Afternoon (14:00–17:00)</option>
+            <option>Evening (17:00–22:00)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Guests</label>
+          <select>
+            <option>1 Guest</option>
+            <option selected>2 Guests</option>
+            <option>3 Guests</option>
+            <option>4 Guests</option>
+            <option>5–8 Guests</option>
+            <option>Private Event (8+)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" placeholder="your@email.cz" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Special Requests</label>
+        <textarea placeholder="Dietary requirements, occasions, seating preferences…"></textarea>
+      </div>
+      <button class="form-submit">Request Reservation</button>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-top">
+      <div class="footer-brand">
+        <a href="#" class="nav-logo">KAFFE</a>
+        <p>A century of coffee excellence in the heart of Prague. Where every cup tells a story and every visit becomes a memory.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Navigate</h4>
+        <ul>
+          <li><a href="#experience">The Experience</a></li>
+          <li><a href="#menu">Our Menu</a></li>
+          <li><a href="#story">Our Story</a></li>
+          <li><a href="#gallery">Gallery</a></li>
+          <li><a href="#reserve">Reservations</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Hours</h4>
+        <div class="footer-hours">
+          <div class="hour-row">
+            <span class="hour-day">Mon – Fri</span>
+            <span class="hour-time">7:00 – 22:00</span>
+          </div>
+          <div class="hour-row">
+            <span class="hour-day">Saturday</span>
+            <span class="hour-time">8:00 – 23:00</span>
+          </div>
+          <div class="hour-row">
+            <span class="hour-day">Sunday</span>
+            <span class="hour-time">8:00 – 23:00</span>
+          </div>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Follow</h4>
+        <ul>
+          <li><a href="#">Instagram</a></li>
+          <li><a href="#">Facebook</a></li>
+          <li><a href="#">TripAdvisor</a></li>
+          <li><a href="#">Google Maps</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 Kaffe Prague. All rights reserved.</p>
+      <div class="footer-social">
+        <a href="#" class="social-link">ig</a>
+        <a href="#" class="social-link">fb</a>
+        <a href="#" class="social-link">tw</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── CURSOR ──
+    const dot = document.getElementById('cursorDot');
+    const ring = document.getElementById('cursorRing');
+    let mx = 0, my = 0, rx = 0, ry = 0;
+
+    document.addEventListener('mousemove', e => {
+      mx = e.clientX; my = e.clientY;
+      dot.style.left = mx + 'px';
+      dot.style.top = my + 'px';
+    });
+
+    function animateCursor() {
+      rx += (mx - rx) * 0.12;
+      ry += (my - ry) * 0.12;
+      ring.style.left = rx + 'px';
+      ring.style.top = ry + 'px';
+      requestAnimationFrame(animateCursor);
+    }
+    animateCursor();
+
+    document.querySelectorAll('a, button, .feature-card, .menu-item').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        dot.style.transform = 'translate(-50%, -50%) scale(2)';
+        ring.style.width = '50px';
+        ring.style.height = '50px';
+        ring.style.borderColor = 'rgba(201,168,76,0.8)';
+      });
+      el.addEventListener('mouseleave', () => {
+        dot.style.transform = 'translate(-50%, -50%) scale(1)';
+        ring.style.width = '36px';
+        ring.style.height = '36px';
+        ring.style.borderColor = 'rgba(201,168,76,0.5)';
+      });
+    });
+
+    // ── NAVBAR SCROLL ──
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 60);
+    });
+
+    // ── PARALLAX HERO ──
+    window.addEventListener('scroll', () => {
+      const heroBg = document.getElementById('heroBg');
+      if (heroBg) {
+        heroBg.style.transform = `scale(1.05) translateY(${window.scrollY * 0.3}px)`;
+      }
+    });
+
+    // ── REVEAL ON SCROLL ──
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('visible');
+          observer.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach(el => observer.observe(el));
+
+    // ── COUNTER ANIMATION ──
+    const statNums = document.querySelectorAll('.stat-number[data-target]');
+    const statObserver = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const el = e.target;
+          const target = parseInt(el.dataset.target);
+          let current = 0;
+          const step = Math.ceil(target / 60);
+          const timer = setInterval(() => {
+            current = Math.min(current + step, target);
+            el.textContent = current + (target >= 100 ? '+' : '');
+            if (current >= target) clearInterval(timer);
+          }, 25);
+          statObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    statNums.forEach(el => statObserver.observe(el));
+
+    // ── MENU TABS ──
+    document.querySelectorAll('.menu-cat').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.menu-cat').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.menu-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+      });
+    });
+
+    // ── RESERVATION FORM ──
+    document.querySelector('.form-submit').addEventListener('click', e => {
+      e.preventDefault();
+      const btn = e.target;
+      btn.textContent = '✦ Reservation Sent';
+      btn.style.background = '#2a4a2a';
+      btn.style.color = '#7ec97e';
+      setTimeout(() => {
+        btn.textContent = 'Request Reservation';
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 3000);
+    });
+
+    // ── SMOOTH ANCHOR SCROLL ──
+    document.querySelectorAll('a[href^="#"]').forEach(a => {
+      a.addEventListener('click', e => {
+        const target = document.querySelector(a.getAttribute('href'));
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
