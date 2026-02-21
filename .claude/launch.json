@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "coffee-site",
+      "runtimeExecutable": "C:\\Users\\rmahi\\AppData\\Roaming\\npm\\node_modules\\bun\\bin\\bun.exe",
+      "runtimeArgs": ["--bun", "x", "serve", "-p", "3456", "."],
+      "port": 3456
+    }
+  ]
+}
